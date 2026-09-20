@@ -145,23 +145,32 @@ class MainActivity : AppCompatActivity() {
                     callback?.onCustomViewHidden()
                     return
                 }
+                if (view == null) return
                 customView = view
                 customViewCallback = callback
 
-                val container = FrameLayout(this@MainActivity).apply {
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-                    addView(view)
+                try {
+                    val container = FrameLayout(this@MainActivity).apply {
+                        layoutParams = ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
+                        (view.parent as? ViewGroup)?.removeView(view)
+                        addView(view)
+                    }
+                    fullScreenContainer = container
+
+                    val decor = window.decorView as ViewGroup
+                    decor.addView(container)
+                    enterFullScreen()
+
+                    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                } catch (e: Throwable) {
+                    customView = null
+                    customViewCallback = null
+                    fullScreenContainer = null
+                    callback?.onCustomViewHidden()
                 }
-                fullScreenContainer = container
-
-                val decor = window.decorView as ViewGroup
-                decor.addView(container)
-                enterFullScreen()
-
-                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
 
             override fun onHideCustomView() {
@@ -170,8 +179,11 @@ class MainActivity : AppCompatActivity() {
                 customView = null
                 customViewCallback = null
 
-                fullScreenContainer?.let {
-                    (it.parent as? ViewGroup)?.removeView(it)
+                try {
+                    fullScreenContainer?.let {
+                        (it.parent as? ViewGroup)?.removeView(it)
+                    }
+                } catch (e: Throwable) {
                 }
                 fullScreenContainer = null
 
@@ -255,13 +267,16 @@ class MainActivity : AppCompatActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        customView?.let { view ->
-            view.layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-            view.requestLayout()
-            fullScreenContainer?.requestLayout()
+        // Re-layout the full-screen container so the video surface fills the new orientation.
+        // DO NOT touch the inner customView's LayoutParams — WebView owns that view and
+        // recreating its LayoutParams can crash the underlying Surface/Texture view.
+        try {
+            val container = fullScreenContainer ?: return
+            if (container.parent !is ViewGroup) return
+            container.requestLayout()
+            (container.parent as ViewGroup).requestLayout()
+        } catch (e: Throwable) {
+            // Ignore — full-screen state is best-effort across rotation
         }
     }
 

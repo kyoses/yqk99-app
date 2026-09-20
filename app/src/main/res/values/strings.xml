@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">yqk99</string>
+    <string name="default_url">https://yqk99.app</string>
+    <string name="settings_title">设置</string>
+    <string name="settings_hint">请输入完整网址（http/https）</string>
+    <string name="save">保存</string>
+    <string name="cancel">取消</string>
+    <string name="url_invalid">网址不合法，请输入以 http:// 或 https:// 开头的网址</string>
+    <string name="menu_settings">设置</string>
+</resources>

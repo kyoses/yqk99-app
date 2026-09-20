@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
         swipeRefresh = findViewById(R.id.swipeRefresh)
         webView = findViewById(R.id.webView)
 
-        // Hide settings entry: long-press toolbar title for 3 seconds to open settings
+        // Hide settings entry: long-press toolbar title to open settings
         findViewById<Toolbar>(R.id.toolbar).setOnLongClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
             true
@@ -100,7 +100,6 @@ class MainActivity : AppCompatActivity() {
             builtInZoomControls = true
             displayZoomControls = false
             mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
-            // Allow autoplay so videos can play without user gesture
             mediaPlaybackRequiresUserGesture = false
         }
 
@@ -141,7 +140,6 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
 
-            // Full-screen video support (e.g. HTML5 <video>, iframe players)
             override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
                 if (customView != null) {
                     callback?.onCustomViewHidden()
@@ -257,7 +255,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        // Keep WebView alive on orientation changes (handled by manifest configChanges)
+        customView?.let { view ->
+            view.layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            view.requestLayout()
+            fullScreenContainer?.requestLayout()
+        }
     }
 
     override fun onDestroy() {
